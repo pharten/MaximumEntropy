@@ -3,116 +3,67 @@ package main;
 public class Entropy {
 	
 	static double[] f = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
-	static int[] occupy = {0, 0, 0, 0, 0, 10};
+	static double[] g = {1.1, 1.2, 1.3, 1.4, 1.5, 1.6};
+	static int[] occupyf = {0, 0, 0, 0, 0, 1};
+	static int[] occupyg = {0, 1, 0, 0, 0, 0};
 	
 	static double[] probdist = {0.1666, 0.1666, 0.1666, 0.1666, 0.1666, 0.1667};
-	
-	static double partition = 0.0;
 
 	public static void main(String[] args) {
 		
-		System.out.println("maxent = "+maximize(probdist));
+		Descriptor d1 = new Descriptor(f, occupyf);
+		
+		System.out.println("d1 maxent = "+maximizeByU(d1, probdist));
+		for (int i=0; i<probdist.length; i++) {
+			System.out.println("probdist["+i+"] = "+probdist[i]);
+		}
+		
+		Descriptor d2 = new Descriptor(g, occupyg);
+		
+		System.out.println("d2 maxent = "+maximizeByU(d2, probdist));
 		for (int i=0; i<probdist.length; i++) {
 			System.out.println("probdist["+i+"] = "+probdist[i]);
 		}
 		
 	}
 	
-	public static double maximize(double[] probdist) {
+	public static double maximizeByU(Descriptor d, double[] probdist) {
 		
 		double[] prob = new double[probdist.length];
-
-		partition = 0.0;
-		double favg = 0.0;
-		for (int i=0; i<prob.length; i++) {
-			favg += occupy[i]*f[i];
-			partition += occupy[i];
-		}
-		if (partition != 0.0) {
-			favg /= partition;
-		} else { // partition == 0.0, set all occupy to 1
-			partition = 0.0;
-			favg = 0.0;
-			for (int i=0; i<prob.length; i++) {
-				favg += f[i];
-				partition += 1;
-			}
-			favg /= partition; 
-		}
-//		favg = 4.5;
-		System.out.println("favg = "+favg);
-		
-		double fcalc = 0.0;
+		double calcf = 0.0;
 		double entropy = 0.0;
 		double maxent = 0.0;
 		
-/*
-		double pinc = 0.001;
-		double pmax = 1.0;
-		double p1 = 0.0;
-		double p2 = 0.0;
-		double p3 = 0.0;
-		double p4 = 0.0;
-		while (p1 <= pmax) {
-			System.out.println("p1 = "+p1);
-			p2 = 0;
-			while (p1+p2 <= pmax) {
-				p3 = 0;
-				while (p1+p2+p3 <= pmax) {
-					p4 = pmax - p3 - p2 - p1;
-					
-					fcalc = p1*f[0] + p2*f[1] + p3*f[2] + p4*f[3];
-//					System.out.println("fcalc = "+fcalc);
-					if (Math.abs(favg-fcalc)<0.0001*favg) {
-						entropy = 0.0;
-						if (0.0 < p1) entropy += -p1*Math.log(p1);
-						if (0.0 < p2) entropy += -p2*Math.log(p2);
-						if (0.0 < p3) entropy += -p3*Math.log(p3);
-						if (0.0 < p4) entropy += -p4*Math.log(p4);
-//						entropy = - p1*Math.log(p1) - p2*Math.log(p2)- p3*Math.log(p3) - p4*Math.log(p4);
-						if (entropy>=maxent) {
-							System.out.println("entropy = "+entropy+", fcalc = "+fcalc);
-							maxent = entropy;
-							probdist[0] = p1;
-							probdist[1] = p2;
-							probdist[2] = p3;
-							probdist[3] = p4;
-						}
-					}
-					
-					p3 += pinc;
-				}
-				p2 += pinc;
-			}
-			p1 += pinc;
-		}
-*/
+//		d.setDavg(4.5);
+		System.out.println("descriptor average = "+d.getDavg());
 		
-		double umin = -40.0/favg;
-		double umax = 40.0/favg;
-		double uinc = 0.001*(umax-umin);
+		double umin = -40.0/d.getDavg();
+		double umax = 40.0/d.getDavg();
+		double uinc = 0.0001*(umax-umin);
+		double partition = 0.0;
 		
 		double u = umin;
 		while (u<=umax) {
 			
 			partition = 0.0;
 			for (int i=0; i<prob.length; i++) {
-				prob[i] = Math.exp(-u*f[i]);
+				prob[i] = Math.exp(-u*d.get(i)) ;
 				partition += prob[i];
 			}
 			
-			fcalc = 0.0;
+			calcf = 0.0;
 			for (int i=0; i<prob.length; i++) {
 				prob[i] /= partition;
-				fcalc += prob[i]*f[i];
+				calcf += prob[i]*d.get(i);
 			}
-//			System.out.println(" u = "+u+", favg = "+favg+", fcalc = "+fcalc);
+//			System.out.println(" u = "+u+", avgf = "+avgf+", calcf = "+calcf);
 			
-			if (Math.abs(fcalc-favg)<=0.001*favg) {
-//				System.out.println(" fcalc = "+fcalc);
+			double davg = d.getDavg();
+			if (Math.abs(calcf-davg)<=0.001*davg) {
+//				System.out.println(" calcf = "+calcf);
 				entropy = 0.0;
 				for (int i=0; i<prob.length; i++) {
-					if (0.0 < prob[i]) entropy += - prob[i] * Math.log(prob[i]);
+					if (prob[i]>0.0) entropy += - prob[i] * Math.log(prob[i]);
 				}
 				if (entropy>maxent) {
 					maxent = entropy;
@@ -121,13 +72,26 @@ public class Entropy {
 					}
 				}
 //				System.out.println("entropy = "+entropy+", u= "+u);
-				System.out.println(" favg = "+favg+", fcalc = "+fcalc+", entropy = "+entropy+", u= "+u);
+				System.out.println(" avg = "+davg+", calcf = "+calcf+", entropy = "+entropy+", u= "+u);
 			}
 			
 			u += uinc;
 		}
 		
-/*		
+		return maxent;
+	}
+	
+	public static double maximizeByF(Descriptor d, double[] probdist) {
+		
+		double[] prob = new double[probdist.length];
+		double calcf = 0.0;
+		double maxent = 0.0;
+		double avgf = d.getDavg();
+		double partition = 0.0;
+		
+//		d.setDavg(4.5);
+		System.out.println("descriptor average = "+d.getDavg());
+				
 		double minf = f[0];
 		double maxf = f[f.length-1];
 		for (int i=0; i<prob.length; i++) {
@@ -141,7 +105,7 @@ public class Entropy {
 		double x = minf;
 	  	while (x<maxf) {
 			
-			fcalc = 0.0;
+			calcf = 0.0;
 			partition = 0.0;
 //			double u = - Math.log(x);
 //			double u = 20.0*(x-minf) /(maxf-minf) - 10.0;  
@@ -153,25 +117,25 @@ public class Entropy {
 			}
 			for (int i=0; i<prob.length; i++) {  
 				prob[i] /= partition;  
-				fcalc += f[i] * prob[i];
+				calcf += f[i] * prob[i];
 			}
 			
-			double diff = Math.abs(fcalc-favg);
-			System.out.println("x = "+x+", u = "+u+", favg = "+favg+", fcalc = "+fcalc+", diff = "+diff+", mindiff = "+mindiff);
+			double diff = Math.abs(calcf-avgf);
+			System.out.println("x = "+x+", u = "+u+", favg = "+avgf+", fcalc = "+calcf+", diff = "+diff+", mindiff = "+mindiff);
 			if (diff < mindiff) {
 				mindiff = diff;
 				double lnZ = Math.log(partition);
-				maxent = lnZ + u * favg;
+				maxent = lnZ + u * avgf;
 				for (int i=0; i<prob.length; i++) {
 //					prob[i] /= partition;
 					probdist[i] =prob[i];
 				}
-				System.out.println("x = "+x+", u = "+u+", fcalc = "+fcalc+", Z = "+partition+", lnZ = "+lnZ+", entropy = "+maxent);
+				System.out.println("x = "+x+", u = "+u+", fcalc = "+calcf+", Z = "+partition+", lnZ = "+lnZ+", entropy = "+maxent);
 			}
 			
 			x += finc;
 		}
-*/
+
 		return maxent;
 	}
 	
