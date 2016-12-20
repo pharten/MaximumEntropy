@@ -3,22 +3,26 @@ package main;
 public class Entropy {
 	
 	static double[] f = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
-	static double[] g = {1.1, 1.2, 1.3, 1.4, 1.5, 1.6};
-	static int[] occupyf = {0, 0, 0, 0, 0, 1};
-	static int[] occupyg = {0, 1, 0, 0, 0, 0};
+	static double[] g = {1.0, 1.1, 1.2, 1.3, 1.4, 1.5};
 	
 	static double[] probdist = {0.1666, 0.1666, 0.1666, 0.1666, 0.1666, 0.1667};
 
 	public static void main(String[] args) {
 		
-		Descriptor d1 = new Descriptor(f, occupyf);
+		Descriptor d1 = new Descriptor(1.0, 6.0, 6);
+		d1.addValue(6.0);
+		d1.addValue(6.0);
+		d1.addValue(6.0);
 		
 		System.out.println("d1 maxent = "+maximizeByU(d1, probdist));
 		for (int i=0; i<probdist.length; i++) {
 			System.out.println("probdist["+i+"] = "+probdist[i]);
 		}
-		
-		Descriptor d2 = new Descriptor(g, occupyg);
+
+		Descriptor d2 = new Descriptor(1.0, 1.5, 6);
+		d2.addValue(1.0);
+		d2.addValue(1.0);
+		d2.addValue(1.0);
 		
 		System.out.println("d2 maxent = "+maximizeByU(d2, probdist));
 		for (int i=0; i<probdist.length; i++) {
@@ -34,8 +38,8 @@ public class Entropy {
 		double entropy = 0.0;
 		double maxent = 0.0;
 		
+		d.calcDavg();
 //		d.setDavg(4.5);
-		System.out.println("descriptor average = "+d.getDavg());
 		
 		double umin = -40.0/d.getDavg();
 		double umax = 40.0/d.getDavg();
@@ -47,14 +51,14 @@ public class Entropy {
 			
 			partition = 0.0;
 			for (int i=0; i<prob.length; i++) {
-				prob[i] = Math.exp(-u*d.get(i)) ;
+				prob[i] = Math.exp(-u*d.get(i).getAvg()) ;
 				partition += prob[i];
 			}
 			
 			calcf = 0.0;
 			for (int i=0; i<prob.length; i++) {
 				prob[i] /= partition;
-				calcf += prob[i]*d.get(i);
+				calcf += prob[i]*d.get(i).getAvg();
 			}
 //			System.out.println(" u = "+u+", avgf = "+avgf+", calcf = "+calcf);
 			
